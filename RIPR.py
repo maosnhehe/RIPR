@@ -216,8 +216,9 @@ def train(epoch, model, criterion,cri, optimizer, trainloader, use_gpu):
         
         loss = criterion(prid, pids)
         loss2=cri(y,imgs_high)
-        loss3=cri(at11,res)+cri(att21,1-res)+cri(at12,res)+cri(att22,1-res)+cri(at13,res)+cri(att23,1-res)+cri(at14,res)+cri(att24,1-res)+cri(at15,res)+cri(att25,1-res)
-        loss =loss+loss2+loss3*0.01
+        res=res.float().view(-1,1,1,1)
+        loss3=cri(at11,res)+cri(at21,1-res)+cri(at12,res)+cri(at22,1-res)+cri(at13,res)+cri(at23,1-res)+cri(at14,res)+cri(at24,1-res)+cri(at15,res)+cri(at25,1-res)
+        loss =loss+loss2*0.1+loss3*0.01
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
