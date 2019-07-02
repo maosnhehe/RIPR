@@ -202,7 +202,11 @@ def train(epoch, model, criterion,cri, optimizer, trainloader, use_gpu):
     data_time = AverageMeter()
 
     model.train()
-
+    mask=torch.zeros(1,1,256,128)
+    for i in range(256):
+      for j in range(128):
+        mask[0,0,i,j]=(2**(-1/256.0*abs(i-127.5))) *  (2**(-1/128.0*abs(i-63.5)))
+    mask=mask.cuda()
 
     end = time.time()
     for batch_idx, (imgs, pids, _, imgs_high, res) in enumerate(trainloader):
@@ -215,7 +219,7 @@ def train(epoch, model, criterion,cri, optimizer, trainloader, use_gpu):
         prid,out,y,at11,at12,at13,at14,at15,at21,at22,at23,at24,at25 = model(imgs)
         
         loss = criterion(prid, pids)
-        loss2=cri(y,imgs_high)
+        loss2=cri(y*mask,imgs_high*mask)
         res=res.float().view(-1,1,1,1)
         loss3=cri(at11,res)+cri(at21,1-res)+cri(at12,res)+cri(at22,1-res)+cri(at13,res)+cri(at23,1-res)+cri(at14,res)+cri(at24,1-res)+cri(at15,res)+cri(at25,1-res)
         loss =loss+loss2*0.1+loss3*0.01
