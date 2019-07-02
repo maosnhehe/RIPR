@@ -9,7 +9,7 @@ To accelerate evaluation (10x faster), you can use cython-based evaluation code 
 
 dataset:
 
-  VR dataset, which can be constructed by downsampling the original dataset. can be download in data/ from xxx. For example, data/vr_market1501/query/XXX
+  VR dataset, which can be constructed by downsampling the original dataset. can be download in data/ from https://pan.baidu.com/s/1B6Equ5Us1Dlod94IGi6K9w, whose password is umzg. For example, data/vr_market1501/query/XXX
 
 train:
 
