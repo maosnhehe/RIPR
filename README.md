@@ -19,7 +19,5 @@ test:
 
 python RIPR.py --evaluate -d market1501 --test-batch 100 --save-dir log/RIPR_train --gpu-devices 0 --testmodel log/RIPR_train/best_model.pth.tar
 
-pretrained model:
 
-downloaded from https://drive.google.com/file/d/18wtKJOo13ZF3OHhzNb2n9Nclpxvmpqkh/view?usp=sharing
 
