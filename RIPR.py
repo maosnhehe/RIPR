@@ -122,7 +122,7 @@ def main():
 
     cri = nn.MSELoss().cuda()
     criterion = nn.CrossEntropyLoss()
-    model=models.resnet_person.net2(num_classes=dataset.num_train_pids)
+    model=torchreid.resnet_person.net2(num_classes=dataset.num_train_pids)
 
 
 
