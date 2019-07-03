@@ -1,10 +1,3 @@
-'''
-
-Modified from huanghoujing's 
-https://github.com/huanghoujing/person-reid-triplet-loss-baseline/blob/master/tri_loss/model/resnet.py
-for building up flexible resnet50 architecture
-
-'''
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -21,77 +14,6 @@ model_urls = {
 }
 
 
-class selfAtten1(nn.Module):
-
-  def __init__(self, cin, r=16):
-    super(selfAtten1, self).__init__()
-    self.conv_d = nn.Conv2d(cin, cin//r, kernel_size=1, stride=1)
-    self.conv_u = nn.Conv2d(cin//r, cin, kernel_size=1, stride=1)
-    
-    self.bn_d = nn.BatchNorm2d(cin//r)
-    self.bn_u = nn.BatchNorm2d(cin)
-    
-    self.relu = nn.ReLU()
-    self.sigmoid = nn.Sigmoid()
-
-    for m in self.modules():
-      if isinstance(m, nn.Conv2d):
-        m.weight.data.fill_(0)
-        m.bias.data.zero_()
-      elif isinstance(m, nn.BatchNorm2d):
-        m.weight.data.fill_(1)
-        m.bias.data.zero_()
-
-  def forward(self, x):
-    out = self.relu(self.bn_d(self.conv_d(x)))
-    out = self.sigmoid(self.bn_u(self.conv_u(out)))
-    return out
-
-
-class selfAtten_se(nn.Module):
-
-  def __init__(self, cin, r=16):
-    super(selfAtten_se, self).__init__()
-    self.conv1 = nn.Conv2d(cin, cin//r, kernel_size=(1, 1))
-    self.conv2 = nn.Conv2d(cin//r, cin, kernel_size=(1, 1))
-    self.bn1 = nn.BatchNorm2d(cin//r)
-
-    self.bn2 = nn.BatchNorm2d(cin)
-
-    self.relu = nn.ReLU()
-    self.sigmoid = nn.Sigmoid()
-
-    for m in self.modules():
-      if isinstance(m, nn.Conv2d):
-        m.weight.data.fill_(0)
-        m.bias.data.zero_()
-      elif isinstance(m, nn.BatchNorm2d):
-        m.weight.data.fill_(1)
-        m.bias.data.zero_()
-
-  def forward(self, x):
-    n, c, h, w = x.shape
-
-    out = F.avg_pool2d(x, (h, w))
-    out = self.relu(self.bn1(self.conv1(out)))
-    out = self.conv2(out)
-    # out = self.bn2(out)
-    out = self.sigmoid(out)
-    return out
-
-class selfAtten_cascade(nn.Module):
-  def __init__(self, cin, r=16):
-    super(selfAtten_cascade, self).__init__()
-    self.ch = selfAtten_se(cin, r)
-    self.sp = selfAtten1(cin, r)
-
-  def forward(self, x):
-    masksp = self.sp(x)
-    out = x*masksp
-
-    maskch = self.ch(out)
-    out = maskch*out
-    return out 
 
 
 
@@ -144,7 +66,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-  def __init__(self, block, layers, last_conv_stride=2, atten=selfAtten_cascade, r=16, fuse='avg'):
+  def __init__(self, block, layers, last_conv_stride=2, r=16, fuse='avg'):
 
     self.inplanes = 64
     super(ResNet, self).__init__()
@@ -158,10 +80,6 @@ class ResNet(nn.Module):
     self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
     self.layer4 = self._make_layer(
       block, 512, layers[3], stride=last_conv_stride)
-
-    self.satten1 = atten(64*4, r)
-    self.satten2 = atten(128*4, r)
-    self.satten3 = atten(256*4, r)
 
 
     for m in self.modules():
@@ -189,34 +107,6 @@ class ResNet(nn.Module):
 
     return nn.Sequential(*layers)
 
-  def forward(self, x):
-    x = self.conv1(x)
-    x = self.bn1(x)
-    x = self.relu(x)
-    x = self.maxpool(x)
-
-    x = self.layer1(x)
-
-    mask1s = self.satten1(x)
-
-    x =  mask1s
-
-    x = self.layer2(x)
-
-    mask2s = self.satten2(x)
-
-    x =  mask2s
-
-    x = self.layer3(x)
-
-    mask3s = self.satten3(x)
-
-    x =  mask3s
-
-    x = self.layer4(x)
-
-    return x
-
 
 def remove_fc(state_dict):
   """Remove the fc layer parameters from state_dict."""
@@ -226,10 +116,7 @@ def remove_fc(state_dict):
   return state_dict
 
 def resnet50_buildup(pretrained=False, **kwargs):
-  """Constructs a ResNet-50 model.
-  Args:
-    pretrained (bool): If True, returns a model pre-trained on ImageNet
-  """
+
   model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
 
   
@@ -252,13 +139,7 @@ class resnet50(nn.Module):
   def __init__(self, last_conv_stride=2, pretrained=True):
     super(resnet50, self).__init__()
     self.base = resnet50_buildup(pretrained=pretrained, last_conv_stride=last_conv_stride)
-  def forward(self, input):
-  # shape [N, C, H, W]
-    output = self.base(input)
-    flatten = F.avg_pool2d(output, output.size()[2:])
-    # shape [N, C]
-    output = flatten.view(flatten.size(0), -1)
-    return output
+
 
 
 class net(nn.Module):
@@ -268,22 +149,6 @@ class net(nn.Module):
         self.net = resnet50(last_conv_stride)
         self.bn = nn.BatchNorm2d(fea_dim)
         self.fc = nn.Linear(fea_dim, n_id_class)
-
-    def forward(self, x):
-        embedding = self.get_embedding(x)
-        out = self.fc(embedding)
-        #return out, embedding
-        return embedding
-
-    def classify(self, x):
-        return self.fc(x)
-        
-    def get_embedding(self, x):
-        out = self.net(x)
-        rev_flat = out.view(-1, self.fea_dim, 1, 1)
-        out = self.bn(rev_flat)
-        return out.view(-1, self.fea_dim)
-
 
 
 
