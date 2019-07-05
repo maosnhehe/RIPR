@@ -70,7 +70,6 @@ args = parser.parse_args()
 
 
 def main():
-    torch.manual_seed(1)
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_devices
     use_gpu = torch.cuda.is_available()
 
@@ -81,12 +80,6 @@ def main():
 
     print("==========\nArgs:{}\n==========".format(args))
 
-    if use_gpu:
-        print("Currently using GPU {}".format(args.gpu_devices))
-        cudnn.benchmark = True
-        torch.cuda.manual_seed_all(1)
-    else:
-        print("Currently using CPU (GPU is highly recommended)")
 
     dataset = mydataset.Market1501(root=args.root, split_id=0)
 
