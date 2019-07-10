@@ -54,10 +54,10 @@ class ImageDatasettest(Dataset):
 
 class ImageDatasettrain(Dataset):
     """Image Person ReID Dataset"""
-    def __init__(self, dataset, height, weight):
+    def __init__(self, dataset, height, width):
         self.dataset = dataset
         self.height=height
-        self.weight=weight
+        self.width=width
     def __len__(self):
         return len(self.dataset)
 
