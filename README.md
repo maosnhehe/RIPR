@@ -19,5 +19,9 @@ test:
 
 python RIPR.py --evaluate -d market1501 --test-batch 100 --save-dir log/RIPR_train --gpu-devices 0 --testmodel log/RIPR_train/best_model.pth.tar
 
+model:
+
+the model file can be downloaded from https://pan.baidu.com/s/1aOBPaiFnlS7BRJWnXvaOew  , whose password is yov0
+
 
 
